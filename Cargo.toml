@@ -1,8 +1,15 @@
 [package]
 name = "taicho"
 version = "0.1.0"
+description = "task and process manager"
+authors = ["Junichi Kakisako <kilo.sw@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.43"
+clap = "2.33.3"
+thiserror = "1.0.28"
+serde = { version = "1.0.128", features = ["derive"] }
+serde_yaml = "0.8.19"
