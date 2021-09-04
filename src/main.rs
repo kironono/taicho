@@ -3,10 +3,13 @@ use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg
 mod config;
 mod error;
 mod manager;
+mod program;
+mod task;
 
 use manager::TaskManager;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let default_config_filename = format!("{}.yaml", crate_name!());
     let matches = App::new(crate_name!())
         .version(crate_version!())
@@ -30,5 +33,5 @@ fn main() {
         eprintln!("{}", err);
         std::process::exit(1);
     });
-    mng.run();
+    mng.run().await;
 }
