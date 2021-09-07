@@ -1,6 +1,9 @@
 use std::process::Stdio;
 
-use tokio::signal;
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    signal,
+};
 
 use crate::{config::Config, error::AppError, program::Program, task::Task};
 
@@ -41,10 +44,44 @@ impl TaskManager {
             tokio::task::spawn(async move {
                 let tag = &program.name;
 
-                let _task: Task = Task::spawn(&program, Stdio::inherit(), Stdio::inherit())
+                let mut task: Task = Task::spawn(&program, Stdio::piped(), Stdio::piped())
                     .await
                     .expect(&format!("failed to spawn {} task", tag))
                     .into();
+
+                match task.stdout() {
+                    None => {
+                        eprintln!("{} | {}", tag, "Unable to read stdout")
+                    }
+                    Some(stdout) => {
+                        let mut reader = BufReader::new(stdout).lines();
+                        tokio::task::spawn({
+                            let tag = tag.clone();
+                            async move {
+                                while let Some(line) = reader.next_line().await.unwrap() {
+                                    eprintln!("{} | {}", tag, line);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                match task.stderr() {
+                    None => {
+                        eprintln!("{} | {}", tag, "Unable to read stderr")
+                    }
+                    Some(stderr) => {
+                        let mut reader = BufReader::new(stderr).lines();
+                        tokio::task::spawn({
+                            let tag = tag.clone();
+                            async move {
+                                while let Some(line) = reader.next_line().await.unwrap() {
+                                    eprintln!("{} | {}", tag, line);
+                                }
+                            }
+                        });
+                    }
+                }
             });
         }
 

@@ -1,6 +1,6 @@
 use std::{io::Result, process::Stdio};
 
-use tokio::process::{Child, Command};
+use tokio::process::{Child, ChildStderr, ChildStdout, Command};
 
 use crate::program::Program;
 
@@ -17,5 +17,13 @@ impl Task {
             .spawn()?;
 
         Ok(Self { child })
+    }
+
+    pub fn stdout(&mut self) -> Option<ChildStdout> {
+        self.child.stdout.take()
+    }
+
+    pub fn stderr(&mut self) -> Option<ChildStderr> {
+        self.child.stderr.take()
     }
 }
