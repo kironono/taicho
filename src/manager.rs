@@ -34,15 +34,18 @@ impl TaskManager {
     }
 
     pub async fn run(&self) {
-        // let name_col_length = programs
-        //     .iter()
-        //     .map(|program| program.name.len())
-        //     .max_by(|x, y| x.cmp(y))
-        //     .unwrap();
+        let name_col_length = self
+            .programs
+            .iter()
+            .map(|program| program.name.len())
+            .max_by(|x, y| x.cmp(y))
+            .unwrap();
 
         for program in self.programs.clone() {
             tokio::task::spawn(async move {
-                let tag = &program.name;
+                let name_len = program.name.len();
+                let padding = " ".repeat(name_col_length - name_len);
+                let tag = format!("{}{}", program.name, padding);
 
                 let mut task: Task = Task::spawn(&program, Stdio::piped(), Stdio::piped())
                     .await
