@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg};
 
 mod config;
@@ -9,7 +10,7 @@ mod task;
 use manager::TaskManager;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let default_config_filename = format!("{}.yaml", crate_name!());
     let matches = App::new(crate_name!())
         .version(crate_version!())
@@ -33,5 +34,6 @@ async fn main() {
         eprintln!("{}", err);
         std::process::exit(1);
     });
-    mng.run().await;
+    mng.run().await?;
+    Ok(())
 }

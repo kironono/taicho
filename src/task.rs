@@ -1,5 +1,6 @@
-use std::{io::Result, process::Stdio};
+use std::process::Stdio;
 
+use anyhow::Result;
 use tokio::process::{Child, ChildStderr, ChildStdout, Command};
 
 use crate::program::Program;
@@ -25,5 +26,10 @@ impl Task {
 
     pub fn stderr(&mut self) -> Option<ChildStderr> {
         self.child.stderr.take()
+    }
+
+    pub async fn exit_check(self) -> Result<()> {
+        let _result = self.child.wait_with_output().await;
+        Ok(())
     }
 }

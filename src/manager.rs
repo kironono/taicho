@@ -1,8 +1,16 @@
-use std::process::Stdio;
+use std::{
+    process::Stdio,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 
+use anyhow::Result;
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
-    signal,
+    time,
 };
 
 use crate::{config::Config, error::AppError, program::Program, task::Task};
@@ -33,7 +41,8 @@ impl TaskManager {
         Ok(Self { config, programs })
     }
 
-    pub async fn run(&self) {
+    pub async fn run(&self) -> Result<()> {
+        let exited_task_count = Arc::new(AtomicUsize::new(0));
         let name_col_length = self
             .programs
             .iter()
@@ -42,6 +51,8 @@ impl TaskManager {
             .unwrap();
 
         for program in self.programs.clone() {
+            let exited_task_count = exited_task_count.clone();
+
             tokio::task::spawn(async move {
                 let name_len = program.name.len();
                 let padding = " ".repeat(name_col_length - name_len);
@@ -85,9 +96,39 @@ impl TaskManager {
                         });
                     }
                 }
+
+                let _exit_result = task.exit_check().await;
+
+                exited_task_count.fetch_add(1, Ordering::Relaxed)
             });
         }
 
-        signal::ctrl_c().await.unwrap();
+        let programs_len = self.programs.len();
+        {
+            let exited_task_count = exited_task_count.clone();
+            tokio::task::spawn(async move {
+                while exited_task_count.load(Ordering::Relaxed) < programs_len {
+                    time::sleep(Duration::from_millis(50)).await;
+                }
+            })
+            .await?;
+        }
+
+        // return done all task
+        Ok(())
+
+        // eprintln!("Ctrl C wait");
+        // signal::ctrl_c().await.unwrap();
+        //
+        // let exit_expire = Instant::now() + Duration::from_secs(10);
+        // while exited_task_count.load(Ordering::Relaxed) < self.programs.len() {
+        //     if Instant::now() > exit_expire {
+        //         eprintln!("Exit waiting timeout.");
+        //         break;
+        //     }
+        //     time::sleep(Duration::from_millis(500)).await;
+        // }
+        //
+        // Ok(())
     }
 }
