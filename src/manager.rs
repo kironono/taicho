@@ -15,7 +15,7 @@ use tokio::{
 
 use crate::{
     config::Config,
-    error::AppError,
+    error::{ConfigError, TaskError},
     program::Program,
     task::{ExitResult, Task},
 };
@@ -27,7 +27,7 @@ pub struct TaskManager {
 }
 
 impl TaskManager {
-    pub fn new(config_filename: String) -> Result<Self, AppError> {
+    pub fn new(config_filename: String) -> Result<Self, ConfigError> {
         let config = match Config::from_file(config_filename) {
             Ok(config) => config,
             Err(err) => return Err(err),
@@ -107,7 +107,10 @@ impl TaskManager {
                 match exit_result {
                     Ok(ExitResult::Output(_)) => eprintln!("exited"),
                     Ok(ExitResult::Interrupted) => eprintln!("Interrupted"),
-                    Err(_) => eprintln!("error"),
+                    Err(TaskError::IoError(err)) => eprintln!("exited with error: {}", err),
+                    Err(TaskError::NonZeroExitCode { code, output: _ }) => {
+                        eprintln!("exited with non-zero code: {:#?}", code)
+                    }
                 }
 
                 exited_task_count.fetch_add(1, Ordering::Relaxed)

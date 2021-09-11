@@ -9,7 +9,7 @@ use tokio::{
     signal,
 };
 
-use crate::{error::AppError, program::Program};
+use crate::{error::TaskError, program::Program};
 
 enum ExitReason {
     CtrlC,
@@ -44,7 +44,7 @@ impl Task {
         self.child.stderr.take()
     }
 
-    pub async fn exit_check(self) -> Result<ExitResult, AppError> {
+    pub async fn exit_check(self) -> Result<ExitResult, TaskError> {
         let exit_reason = {
             tokio::select! {
                 r = tokio::task::spawn(async move {
@@ -57,16 +57,14 @@ impl Task {
         };
 
         match exit_reason {
-            ExitReason::TaskFinished(result) => match result {
-                Ok(output) => {
-                    if output.status.success() {
-                        Ok(ExitResult::Output(output))
-                    } else {
-                        Err(AppError::TaskExitError("".to_string()))
-                    }
+            ExitReason::TaskFinished(result) => {
+                let output = result?;
+                if output.status.success() {
+                    Ok(ExitResult::Output(output))
+                } else {
+                    Err(output.into())
                 }
-                Err(_e) => Err(AppError::TaskExitError("".to_string())),
-            },
+            }
             ExitReason::CtrlC => Ok(ExitResult::Interrupted),
         }
     }
