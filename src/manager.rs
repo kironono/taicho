@@ -13,7 +13,12 @@ use tokio::{
     time,
 };
 
-use crate::{config::Config, error::AppError, program::Program, task::Task};
+use crate::{
+    config::Config,
+    error::AppError,
+    program::Program,
+    task::{ExitResult, Task},
+};
 
 #[derive(Debug, Clone)]
 pub struct TaskManager {
@@ -97,7 +102,13 @@ impl TaskManager {
                     }
                 }
 
-                let _exit_result = task.exit_check().await;
+                let exit_result = task.exit_check().await;
+
+                match exit_result {
+                    Ok(ExitResult::Output(_)) => eprintln!("exited"),
+                    Ok(ExitResult::Interrupted) => eprintln!("Interrupted"),
+                    Err(_) => eprintln!("error"),
+                }
 
                 exited_task_count.fetch_add(1, Ordering::Relaxed)
             });

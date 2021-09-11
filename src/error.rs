@@ -6,4 +6,6 @@ pub enum AppError {
     ConfigFileError(String),
     #[error("ConfigDeserializedError: {0}")]
     ConfigDeserializedError(String),
+    #[error("TaskExitError: {0}")]
+    TaskExitError(String),
 }
