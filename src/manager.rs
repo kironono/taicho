@@ -7,17 +7,17 @@ use std::{
     time::Duration,
 };
 
-use anyhow::Result;
-use tokio::{
-    io::{AsyncBufReadExt, BufReader},
-    time,
-};
-
 use crate::{
     config::Config,
     error::{ConfigError, TaskError},
     program::Program,
     task::{ExitResult, Task},
+};
+use anyhow::Result;
+use chrono::Local;
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    time,
 };
 
 #[derive(Debug, Clone)]
@@ -78,7 +78,13 @@ impl TaskManager {
                             let tag = tag.clone();
                             async move {
                                 while let Some(line) = reader.next_line().await.unwrap() {
-                                    eprintln!("{} | {}", tag, line);
+                                    let dt = Local::now();
+                                    eprintln!(
+                                        "{} {} | {}",
+                                        dt.format("%H:%M:%S").to_string(),
+                                        tag,
+                                        line
+                                    );
                                 }
                             }
                         });
@@ -95,7 +101,13 @@ impl TaskManager {
                             let tag = tag.clone();
                             async move {
                                 while let Some(line) = reader.next_line().await.unwrap() {
-                                    eprintln!("{} | {}", tag, line);
+                                    let dt = Local::now();
+                                    eprintln!(
+                                        "{} {} | {}",
+                                        dt.format("%H:%M:%S").to_string(),
+                                        tag,
+                                        line
+                                    );
                                 }
                             }
                         });
