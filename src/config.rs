@@ -8,6 +8,8 @@ use crate::error::ConfigError;
 pub struct ProgramConfig {
     pub name: String,
     pub command: String,
+    #[serde(default = "default_environment")]
+    pub environment: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,4 +31,8 @@ impl Config {
             )),
         }
     }
+}
+
+fn default_environment() -> Vec<String> {
+    vec![]
 }

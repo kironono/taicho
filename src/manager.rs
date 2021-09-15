@@ -40,6 +40,7 @@ impl TaskManager {
             .map(|pc| Program {
                 name: pc.name,
                 command: pc.command,
+                environment: pc.environment,
             })
             .collect();
 
